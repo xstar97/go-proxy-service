@@ -20,7 +20,7 @@ RUN go mod download
 COPY go/main.go .
 
 # Build the Go application
-RUN go build -o /output/my-proxy-service .
+RUN go build -ldflags "-w -s" -o /output/my-proxy-service .
 
 # Stage 2 - Create the final image
 FROM alpine AS runner
