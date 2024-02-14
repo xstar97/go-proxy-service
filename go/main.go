@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"sync"
 	"github.com/fsnotify/fsnotify"
+	"strings"
 )
 
 var (
@@ -29,7 +30,7 @@ func main() {
 }
 
 func proxyHandler(w http.ResponseWriter, r *http.Request) {
-	targetURL := *proxyTargetFlag + r.URL.String()
+	targetURL := strings.TrimSuffix(*proxyTargetFlag, "/") + r.URL.String()
 	req, err := http.NewRequest(r.Method, targetURL, r.Body)
 	if err != nil {
 		handleError(w, err, http.StatusInternalServerError)
