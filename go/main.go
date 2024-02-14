@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"sync"
 	"github.com/fsnotify/fsnotify"
-	//"strings"
+	"strings"
 )
 
 var (
@@ -30,40 +30,60 @@ func main() {
 }
 
 func proxyHandler(w http.ResponseWriter, r *http.Request) {
-	targetURL := string(*proxyTargetFlag)
-	// Check if the request URL is not empty
-	if r.URL.String() != "/" {
-		targetURL += r.URL.String()
-	}
-	req, err := http.NewRequest(r.Method, targetURL, r.Body)
-	if err != nil {
-		handleError(w, err, http.StatusInternalServerError)
-		return
-	}
+    // Log the incoming request
+    log.Printf("Incoming request: %s %s", r.Method, r.URL)
+
+    targetURL := string(*proxyTargetFlag)
+    // Check if the request URL is not empty
+    if r.URL.String() != "/" {
+        targetURL += r.URL.String()
+    }
+    // Log the target URL
+    log.Printf("Target URL: %s", targetURL)
+
+    req, err := http.NewRequest(r.Method, targetURL, r.Body)
+    if err != nil {
+        handleError(w, err, http.StatusInternalServerError)
+        return
+    }
 
 	authTokenValue, err := readAuthToken()
-	if err != nil {
-		handleError(w, err, http.StatusInternalServerError)
-		return
-	}
 
-	req.Header.Set(*authTokenHeader, authTokenValue)
+    if err != nil {
+        handleError(w, err, http.StatusInternalServerError)
+        return
+    }
+	//trim value
+	authTokenValue = strings.TrimSpace(authTokenValue)
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		handleError(w, err, http.StatusInternalServerError)
-		return
-	}
-	defer resp.Body.Close()
+    // Validate the existence of the auth token
+    if len(authTokenValue) == 0 {
+        log.Println("Authentication token is empty")
+        handleError(w, fmt.Errorf("authentication token is empty"), http.StatusUnauthorized)
+        return
+    }
 
-	copyHeaders(w, resp)
-	w.WriteHeader(resp.StatusCode)
-	_, err = io.Copy(w, resp.Body)
-	if err != nil {
-		handleError(w, err, http.StatusInternalServerError)
-		return
-	}
+    log.Printf("authTokenHeader: %s", string(*authTokenHeader))
+    req.Header.Set(*authTokenHeader, authTokenValue)
+
+    client := &http.Client{}
+    resp, err := client.Do(req)
+    if err != nil {
+        handleError(w, err, http.StatusInternalServerError)
+        return
+    }
+    defer resp.Body.Close()
+
+    // Log the response status
+    log.Printf("Response status: %s", resp.Status)
+
+    copyHeaders(w, resp)
+    w.WriteHeader(resp.StatusCode)
+    _, err = io.Copy(w, resp.Body)
+    if err != nil {
+        handleError(w, err, http.StatusInternalServerError)
+        return
+    }
 }
 
 func readAuthToken() (string, error) {
