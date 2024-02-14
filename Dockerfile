@@ -39,6 +39,7 @@ COPY --from=builder /output/my-proxy-service .
 
 # Set environment variables
 ENV PORT=3000
+
 # enviromental variable to append flags to CMD
 ENV ARGS=
 
@@ -46,4 +47,4 @@ ENV ARGS=
 EXPOSE $PORT
 
 # Set the default command to run the binary
-CMD ["./my-proxy-service", "$ARGS"]
+CMD sh -c "./my-proxy-service --port $PORT $ARGS"
