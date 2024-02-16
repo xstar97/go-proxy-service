@@ -11,13 +11,13 @@ RUN mkdir -p /build /output
 WORKDIR /build
 
 # Copy go mod and sum files
-COPY go/go.mod go/go.sum ./
+COPY go.mod go.sum ./
 
 # Download dependencies
 RUN go mod download
 
 # Copy the rest of the Go application source code
-COPY go/main.go .
+COPY cmd/main.go .
 
 # Build the Go application
 RUN go build -ldflags "-w -s" -o /output/my-proxy-service .
@@ -40,11 +40,8 @@ COPY --from=builder /output/my-proxy-service .
 # Set environment variables
 ENV PORT=3000
 
-# enviromental variable to append flags to CMD
-ENV ARGS=
-
 # Expose the port
 EXPOSE $PORT
 
 # Set the default command to run the binary
-CMD sh -c "./my-proxy-service --port $PORT $ARGS"
+CMD sh -c "./my-proxy-service"
