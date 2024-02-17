@@ -18,6 +18,9 @@ RUN go mod download
 
 # Copy the rest of the Go application source code
 COPY cmd/main.go .
+COPY internal/config ./internal/config
+COPY internal/proxy ./internal/proxy
+COPY internal/utils ./internal/utils
 
 # Build the Go application
 RUN go build -ldflags "-w -s" -o /output/my-proxy-service .
